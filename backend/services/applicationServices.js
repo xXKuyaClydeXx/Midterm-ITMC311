@@ -3,48 +3,65 @@ const Application = require('../models/Application');
 
 /**
  * Submit a new job application
- * Automatically prevents duplicates (same applicant & job)
  */
 async function submitApplication({ id, jobId, applicantId, status, appliedAt }) {
-  // Check if applicant already applied for this job
   const existing = await Application.findOne({ jobId, applicantId });
   if (existing) {
     throw new Error('You have already applied for this job.');
   }
 
-  // Create new application
   const application = new Application({
-    id, // optional; schema auto-generates if not provided
+    id,
     jobId,
     applicantId,
     status: status || 'applied',
     appliedAt: appliedAt || Date.now()
   });
 
-  // Save to DB
   const saved = await application.save();
   return saved;
 }
 
 /**
- * Retrieve a single application by ID
+ * Get application by MongoDB _id
  */
 async function getApplicationById(id) {
   return Application.findById(id).exec();
 }
 
 /**
- * List all applications (optionally filter by applicant, job, or status)
+ * List all applications (filter optional)
  */
 async function listApplications(filter = {}) {
   return Application.find(filter).sort({ appliedAt: -1 }).exec();
 }
 
 /**
- * Update application status
+ * ✅ Update application status
+ * 
+ * @param {String} id - MongoDB _id or custom application id
+ * @param {String} newStatus - New status value
+ * @returns {Object} Updated application
  */
-async function updateApplicationStatus(id, status) {
-  return Application.findByIdAndUpdate(id, { status }, { new: true }).exec();
+async function updateApplicationStatus(id, newStatus) {
+  // Check if valid status
+  const allowedStatuses = ['applied', 'interview', 'offered', 'rejected', 'hired'];
+  if (!allowedStatuses.includes(newStatus)) {
+    throw new Error(`Invalid status. Allowed values: ${allowedStatuses.join(', ')}`);
+  }
+
+  // Find and update application
+  const updated = await Application.findOneAndUpdate(
+    { $or: [{ _id: id }, { id }] }, // can use _id or custom id
+    { status: newStatus },
+    { new: true }
+  );
+
+  if (!updated) {
+    throw new Error('Application not found.');
+  }
+
+  return updated;
 }
 
 module.exports = {
