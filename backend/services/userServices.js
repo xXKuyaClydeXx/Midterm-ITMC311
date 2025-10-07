@@ -1,31 +1,53 @@
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 
-const SALT_ROUNDS = 10; // You can make this configurable via .env
+const SALT_ROUNDS = 10;
+const JWT_SECRET = process.env.JWT_SECRET || "dev_secret";
+const JWT_EXPIRES_IN = "1h"; // optional: move to .env
 
-// Service to register a new user
+// --- Register user service (existing) ---
 exports.registerUser = async (username, password, role = "applicant") => {
   try {
-    // Check if username already exists
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      throw new Error("Username already exists");
-    }
+    if (existingUser) throw new Error("Username already exists");
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-    // Create new user
-    const user = new User({
-      username,
-      password: hashedPassword,
-      role,
-    });
-
-    // Save user to DB
+    const user = new User({ username, password: hashedPassword, role });
     await user.save();
-
     return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// --- Login user service (new) ---
+exports.loginUser = async (username, password) => {
+  try {
+    // Find user by username
+    const user = await User.findOne({ username });
+    if (!user) throw new Error("Invalid username or password");
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new Error("Invalid username or password");
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    // Return user + token
+    return {
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        role: user.role,
+      },
+    };
   } catch (error) {
     throw error;
   }
