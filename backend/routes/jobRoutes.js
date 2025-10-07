@@ -2,6 +2,7 @@ import express from "express";
 import { jobValidationRules } from "../validators/jobValidator.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
 import { createJob, updateJob } from "../controllers/jobController.js";
+import { createJob } from "../controllers/jobController.js";
 
 const router = express.Router();
 
