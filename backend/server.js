@@ -1,11 +1,10 @@
-import express from "express";
-import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-
-dotenv.config();
-connectDB();
-const userRoutes = require("./routes/userRoutes");
+const express = require("express");
 const app = express();
+require("dotenv").config();
+
+const userRoutes = require("./routes/userRoutes");
+
+app.use(express.json());
 app.use("/api/users", userRoutes);
 
-app.listen(4000, () => console.log("Server on http://localhost:4000"));
+app.listen(3000, () => console.log("Server running on port 3000"));
