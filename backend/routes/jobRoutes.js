@@ -1,8 +1,7 @@
 import express from "express";
 import { jobValidationRules } from "../validators/jobValidator.js";
 import { validateRequest } from "../middlewares/validateRequest.js";
-import { createJob, updateJob } from "../controllers/jobController.js";
-import { createJob } from "../controllers/jobController.js";
+import { createJob, updateJob, deleteJob } from "../controller/jobController.js";
 
 const router = express.Router();
 
@@ -11,5 +10,8 @@ router.post("/", jobValidationRules, validateRequest, createJob);
 
 // Update job
 router.put("/:id", jobValidationRules, validateRequest, updateJob);
+
+// Delete job
+router.delete("/:id", deleteJob);
 
 export default router;
